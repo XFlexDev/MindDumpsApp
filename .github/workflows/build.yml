@@ -24,163 +24,11 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
-      - name: Generate Project Structure
+      - name: Generate Flutter Project Clean
         run: |
-          mkdir -p lib
-          mkdir -p android/app/src/main
-
-          cat << 'EOF' > pubspec.yaml
-          name: mind_dumps
-          description: MindDumps Application
-          version: 1.0.0+1
-          environment:
-            sdk: '>=3.0.0 <4.0.0'
-          dependencies:
-            flutter:
-              sdk: flutter
-            shared_preferences: ^2.2.3
-          flutter:
-            uses-material-design: true
-          EOF
-
-          cat << 'EOF' > android/gradle.properties
-          android.useAndroidX=true
-          android.enableJetifier=true
-          EOF
-
-          cat << 'EOF' > android/build.gradle
-          buildscript {
-              ext.kotlin_version = '1.8.22'
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.1.0'
-                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-              }
-          }
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.buildDir = '../build'
-          subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
-          }
-          subprojects {
-              project.evaluationDependsOn(':app')
-          }
-          task clean(type: Delete) {
-              delete rootProject.buildDir
-          }
-          EOF
-
-          cat << 'EOF' > android/settings.gradle
-          include ':app'
-          def localProperties = new Properties()
-          def localPropertiesFile = new File(settingsDir, 'local.properties')
-          if (localPropertiesFile.exists()) {
-              localPropertiesFile.withReader('UTF-8') { reader ->
-                  localProperties.load(reader)
-              }
-          }
-          def flutterSdkPath = localProperties.getProperty('flutter.sdk')
-          if (flutterSdkPath == null) {
-              flutterSdkPath = System.getenv('FLUTTER_ROOT')
-          }
-          if (flutterSdkPath == null) {
-              throw new GradleException("Flutter SDK not found.")
-          }
-          evaluate(new File(flutterSdkPath, 'packages/flutter_tools/gradle/app_plugin_loader.gradle'))
-          EOF
-
-          cat << 'EOF' > android/app/build.gradle
-          def localProperties = new Properties()
-          def localPropertiesFile = rootProject.file('local.properties')
-          if (localPropertiesFile.exists()) {
-              localPropertiesFile.withReader('UTF-8') { reader ->
-                  localProperties.load(reader)
-              }
-          }
-          def flutterRoot = localProperties.getProperty('flutter.sdk')
-          if (flutterRoot == null) {
-              flutterRoot = System.getenv('FLUTTER_ROOT')
-          }
-          apply plugin: 'com.android.application'
-          apply plugin: 'kotlin-android'
-          apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-          android {
-              compileSdkVersion 34
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-              kotlinOptions {
-                  jvmTarget = '17'
-              }
-              sourceSets {
-                  main.java.srcDirs += 'src/main/kotlin'
-              }
-              defaultConfig {
-                  applicationId "com.kreatix.minddump"
-                  minSdkVersion 21
-                  targetSdkVersion 34
-                  versionCode 1
-                  versionName "1.0.0"
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.debug
-                  }
-              }
-          }
-          flutter {
-              source '../..'
-          }
-          EOF
-
-          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.kreatix.minddump">
-             <application android:label="MindDumps" android:icon="@mipmap/ic_launcher" android:name="${applicationName}">
-                 <activity android:name=".MainActivity"
-                     android:exported="true"
-                     android:launchMode="singleTop"
-                     android:theme="@style/LaunchTheme"
-                     android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode"
-                     android:hardwareAccelerated="true"
-                     android:windowSoftInputMode="adjustResize">
-                     <meta-data android:name="io.flutter.embedding.android.NormalTheme" android:resource="@style/NormalTheme"/>
-                     <intent-filter>
-                         <action android:name="android.intent.action.MAIN"/>
-                         <category android:name="android.intent.category.LAUNCHER"/>
-                     </intent-filter>
-                 </activity>
-                 <meta-data android:name="flutterEmbedding" android:value="2" />
-             </application>
-          </manifest>
-          EOF
-
-          mkdir -p android/app/src/main/res/values
-          cat << 'EOF' > android/app/src/main/res/values/styles.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
-              </style>
-              <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-              </style>
-          </resources>
-          EOF
-
-          mkdir -p android/app/src/main/kotlin/com/kreatix/minddump
-          cat << 'EOF' > android/app/src/main/kotlin/com/kreatix/minddump/MainActivity.kt
-          package com.kreatix.minddump
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() {
-          }
-          EOF
+          rm -rf *
+          flutter create . --project-name=mind_dumps --org=com.kreatix --platforms=android
+          rm -f lib/main.dart
 
       - name: Fetch Application Source Code
         run: |
@@ -866,10 +714,20 @@ jobs:
           }
           EOF
 
+      - name: Add Dependencies to pubspec
+        run: |
+          flutter pub add shared_preferences
+
+      - name: Fix Android Package Name
+        run: |
+          sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/build.gradle
+          sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/src/debug/AndroidManifest.xml
+          sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/src/profile/AndroidManifest.xml
+
       - name: Build Android App Bundle
         run: |
-          flutter pub get
-          flutter build appbundle --release --no-pub
+          flutter build appbundle --release
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
