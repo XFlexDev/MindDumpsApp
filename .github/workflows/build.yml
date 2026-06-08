@@ -737,14 +737,20 @@ jobs:
         run: |
           flutter build apk --release
 
-      - name: Move Packages to Clean Target Directory
+      - name: Prepare Separate Artifact Directories
         run: |
-          mkdir -p minddumps_packages
-          cp build/app/outputs/bundle/release/app-release.aab minddumps_packages/
-          cp build/app/outputs/flutter-apk/app-release.apk minddumps_packages/
+          mkdir -p build_aab build_apk
+          cp build/app/outputs/bundle/release/app-release.aab build_aab/
+          cp build/app/outputs/flutter-apk/app-release.apk build_apk/
 
-      - name: Upload Build Artifacts
+      - name: Upload AAB Package
         uses: actions/upload-artifact@v4
         with:
-          name: minddumps-release-packages
-          path: minddumps_packages/
+          name: minddumps-aab-package
+          path: build_aab/
+
+      - name: Upload APK Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: minddumps-apk-package
+          path: build_apk/
