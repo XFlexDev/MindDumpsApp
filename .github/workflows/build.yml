@@ -1,4 +1,4 @@
-name: Build MindDumps AAB
+name: Build MindDumps AAB and APK
 
 on:
   push:
@@ -733,8 +733,14 @@ jobs:
         run: |
           flutter build appbundle --release
 
-      - name: Upload Build Artifact
+      - name: Build Android APK
+        run: |
+          flutter build apk --release
+
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-bundle
-          path: build/app/outputs/bundle/release/app-release.aab
+          name: minddumps-release-packages
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-release.apk
