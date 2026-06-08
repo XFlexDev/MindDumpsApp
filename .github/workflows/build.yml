@@ -43,6 +43,11 @@ jobs:
             uses-material-design: true
           EOF
 
+          cat << 'EOF' > android/gradle.properties
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
@@ -76,7 +81,7 @@ jobs:
           cat << 'EOF' > android/settings.gradle
           include ':app'
           def localProperties = new Properties()
-          def localPropertiesFile = rootProject.file('local.properties')
+          def localPropertiesFile = new File(settingsDir, 'local.properties')
           if (localPropertiesFile.exists()) {
               localPropertiesFile.withReader('UTF-8') { reader ->
                   localProperties.load(reader)
