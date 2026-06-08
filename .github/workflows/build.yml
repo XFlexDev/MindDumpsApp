@@ -24,9 +24,22 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
+      - name: Locate Logo File
+        id: logo-check
+        run: |
+          LOGO_PATH=$(find . -maxdepth 1 -name "logo.*" | head -n 1)
+          if [ -z "$LOGO_PATH" ]; then
+            echo "Logo file not found in root. Using default fallback icons."
+            echo "has_logo=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found logo at $LOGO_PATH"
+            echo "has_logo=true" >> $GITHUB_OUTPUT
+            echo "logo_ext=${LOGO_PATH##*.}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate Flutter Project Clean
         run: |
-          rm -rf *
+          rm -rf android build lib pubspec.yaml
           flutter create . --project-name=mind_dumps --org=com.kreatix --platforms=android
           rm -f lib/main.dart
 
@@ -47,6 +60,7 @@ jobs:
             @override
             Widget build(BuildContext context) {
               return MaterialApp(
+                title: 'MindDumps',
                 debugShowCheckedModeBanner: false,
                 theme: ThemeData(
                   useMaterial3: true,
@@ -147,7 +161,7 @@ jobs:
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Who is polluting this local storage?',
+                        'Enter your name to begin',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -160,7 +174,7 @@ jobs:
                         style: const TextStyle(color: Colors.white, fontSize: 18),
                         autofocus: true,
                         decoration: InputDecoration(
-                          hintText: 'Give us a name. Any name.',
+                          hintText: 'Your name',
                           hintStyle: TextStyle(color: Colors.white.withOpacity(0.24)),
                           enabledBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.white24),
@@ -283,7 +297,7 @@ jobs:
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "How's your day? ;)",
+                                  "How is your day going?",
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Colors.white.withOpacity(0.38),
@@ -315,7 +329,7 @@ jobs:
                           onChanged: (_) => _applyFilters(),
                           style: const TextStyle(color: Colors.white, fontSize: 14),
                           decoration: InputDecoration(
-                            hintText: 'Search through past trauma...',
+                            hintText: 'Search entries...',
                             hintStyle: TextStyle(color: Colors.white.withOpacity(0.24)),
                             prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 20),
                             filled: true,
@@ -336,7 +350,7 @@ jobs:
                           scrollDirection: Axis.horizontal,
                           physics: const BouncingScrollPhysics(),
                           child: Row(
-                            children: ['All', 'Anxious', 'Numb', 'Chaos', 'Chill', 'Rage'].map((mood) {
+                            children: ['All', 'Calm', 'Focused', 'Anxious', 'Overwhelmed', 'Reflective'].map((mood) {
                               final isSelected = _selectedFilterMood == mood;
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8.0),
@@ -372,7 +386,7 @@ jobs:
                           child: _filteredDumps.isEmpty
                               ? const Center(
                                   child: Text(
-                                    'Nothing found.\nEither you are cured or filters are tight.',
+                                    'No entries found.\nTap below to write down your thoughts.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(color: Colors.white12, fontSize: 13),
                                   ),
@@ -421,7 +435,7 @@ jobs:
                                                     borderRadius: BorderRadius.circular(4),
                                                   ),
                                                   child: Text(
-                                                    dump['mood'] ?? 'Unknown',
+                                                    dump['mood'] ?? 'General',
                                                     style: const TextStyle(color: Colors.white60, fontSize: 10),
                                                   ),
                                                 ),
@@ -491,7 +505,7 @@ jobs:
 
           class _DumpStationScreenState extends State<DumpStationScreen> {
             final TextEditingController _controller = TextEditingController();
-            String _selectedMood = 'Chill';
+            String _selectedMood = 'Calm';
             int _wordCount = 0;
             int _charCount = 0;
 
@@ -550,7 +564,7 @@ jobs:
                     TextButton(
                       onPressed: _buryIt,
                       child: const Text(
-                        'Bury it',
+                        'Save entry',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                     ),
@@ -563,7 +577,7 @@ jobs:
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Select current head state:',
+                        'Select current mindset:',
                         style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 12),
                       ),
                       const SizedBox(height: 8),
@@ -571,7 +585,7 @@ jobs:
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         child: Row(
-                          children: ['Chill', 'Anxious', 'Numb', 'Chaos', 'Rage'].map((mood) {
+                          children: ['Calm', 'Focused', 'Anxious', 'Overwhelmed', 'Reflective'].map((mood) {
                             final isSelected = _selectedMood == mood;
                             return Padding(
                               padding: const EdgeInsets.only(right: 8.0),
@@ -608,7 +622,7 @@ jobs:
                           style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5),
                           autofocus: true,
                           decoration: InputDecoration(
-                            hintText: 'What is polluting your mind right now?',
+                            hintText: 'Write down whatever is on your mind...',
                             hintStyle: TextStyle(color: Colors.white.withOpacity(0.24)),
                             border: InputBorder.none,
                           ),
@@ -620,12 +634,8 @@ jobs:
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Words: $_wordCount | Chars: $_charCount',
+                              'Words: $_wordCount | Characters: $_charCount',
                               style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 11),
-                            ),
-                            const Text(
-                              'Keep spilling.',
-                              style: TextStyle(color: Colors.white12, fontSize: 11),
                             ),
                           ],
                         ),
@@ -668,7 +678,7 @@ jobs:
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   backgroundColor: Color(0xFF121212),
-                  content: Text('All records incinerated.', style: TextStyle(color: Colors.white, fontFamily: 'Courier')),
+                  content: Text('All records cleared successfully.', style: TextStyle(color: Colors.white, fontFamily: 'Courier')),
                 ),
               );
             }
@@ -693,16 +703,16 @@ jobs:
                       const SizedBox(height: 16),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Wipe Identity', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
-                        subtitle: Text('Clears saved name from local storage.', style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 12)),
+                        title: const Text('Reset Profile Name', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
+                        subtitle: Text('Clears your profile name from local memory.', style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 12)),
                         trailing: const Icon(Icons.delete_sweep, color: Colors.redAccent),
                         onTap: () => _wipeIdentity(context),
                       ),
                       const Divider(color: Colors.white10, height: 32),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Incinerate All Dumps', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
-                        subtitle: Text('Permanently deletes every single record. No undo.', style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 12)),
+                        title: const Text('Clear All Entries', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
+                        subtitle: Text('Permanently removes every single saved record.', style: TextStyle(color: Colors.white.withOpacity(0.38), fontSize: 12)),
                         trailing: const Icon(Icons.local_fire_department, color: Colors.redAccent),
                         onTap: () => _clearDumps(context),
                       ),
@@ -717,6 +727,25 @@ jobs:
       - name: Add Dependencies to pubspec
         run: |
           flutter pub add shared_preferences
+          if [ "${{ steps.logo-check.outputs.has_logo }}" = "true" ]; then
+            flutter pub add --dev flutter_launcher_icons
+          fi
+
+      - name: Configure and Generate Launcher Icons lokaalisti
+        if: steps.logo-check.outputs.has_logo == 'true'
+        run: |
+          cat << 'EOF' > flutter_launcher_icons.yaml
+          flutter_launcher_icons:
+            android: "launcher_icon"
+            image_path: "logo.${{ steps.logo-check.outputs.logo_ext }}"
+            adaptive_icon_background: "#000000"
+            adaptive_icon_foreground: "logo.${{ steps.logo-check.outputs.logo_ext }}"
+          EOF
+          flutter pub run flutter_launcher_icons:main
+
+      - name: Set Clean App Visible Name
+        run: |
+          sed -i 's/android:label="mind_dumps"/android:label="MindDumps"/g' android/app/src/main/AndroidManifest.xml
 
       - name: Force Modern Kotlin Version
         run: |
