@@ -751,6 +751,54 @@ jobs:
         run: |
           sed -i 's/id "org.jetbrains.kotlin.android" version .*/id "org.jetbrains.kotlin.android" version "1.9.22" apply false/' android/settings.gradle
 
+      - name: Inject Google Play Production Signing Key
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          HAS_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/minddumps-release.keystore
+          cat << EOF > android/key.properties
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=minddumps-release.keystore
+          EOF
+          
+          cat << 'EOF' > update_gradle.py
+          import os
+          path = 'android/app/build.gradle'
+          with open(path, 'r') as f:
+              content = f.read()
+          
+          signing_config = """
+              signingConfigs {
+                  release {
+                      def keystoreProperties = new Properties()
+                      def keystorePropertiesFile = rootProject.file('key.properties')
+                      if (keystorePropertiesFile.exists()) {
+                          keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+                          storeFile = file(keystoreProperties['storeFile'])
+                          storePassword = keystoreProperties['storePassword']
+                          keyAlias = keystoreProperties['keyAlias']
+                          keyPassword = keystoreProperties['keyPassword']
+                      }
+                  }
+              }
+          """
+          
+          if 'signingConfigs' not in content:
+              content = content.replace('android {', 'android {' + signing_config)
+          content = content.replace('signingConfig signingConfigs.debug', 'signingConfig signingConfigs.release')
+          
+          with open(path, 'w') as f:
+              f.write(content)
+          EOF
+          python3 update_gradle.py
+
       - name: Fix Android Package Name
         run: |
           sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/build.gradle
