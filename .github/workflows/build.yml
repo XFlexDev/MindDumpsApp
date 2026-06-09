@@ -752,7 +752,6 @@ jobs:
           sed -i 's/id "org.jetbrains.kotlin.android" version .*/id "org.jetbrains.kotlin.android" version "1.9.22" apply false/' android/settings.gradle
 
       - name: Inject Google Play Production Signing Key
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
