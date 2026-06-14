@@ -24,6 +24,10 @@ jobs:
         with:
           flutter-version: '3.24.0'
 
+      - name: Decode Release Keystore from Base64
+        run: |
+          echo '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' | base64 -d > release-keystore.jks
+
       - name: Locate Logo File
         id: logo-check
         run: |
@@ -322,7 +326,7 @@ jobs:
                               },
                             ),
                           ],
-                        ),
+                        },
                         const SizedBox(height: 24),
                         TextField(
                           controller: _searchController,
@@ -758,13 +762,21 @@ jobs:
           sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/src/debug/AndroidManifest.xml
           sed -i 's/com.example.mind_dumps/com.kreatix.minddump/g' android/app/src/profile/AndroidManifest.xml
 
-      - name: Build Android App Bundle
+      - name: Build Android App Bundle (Signed with Release Key)
         run: |
-          flutter build appbundle --release
+          flutter build appbundle --release \
+            --keystore=release-keystore.jks \
+            --keystore-password=Kreatix123123# \
+            --key-alias=KreatixDev \
+            --key-password=Kreatix123123#
 
-      - name: Build Android APK
+      - name: Build Android APK (Signed with Release Key)
         run: |
-          flutter build apk --release
+          flutter build apk --release \
+            --keystore=release-keystore.jks \
+            --keystore-password=Kreatix123123# \
+            --key-alias=KreatixDev \
+            --key-password=Kreatix123123#
 
       - name: Prepare Separate Artifact Directories
         run: |
